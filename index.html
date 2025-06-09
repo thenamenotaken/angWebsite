@@ -1,10 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My First Website</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
     <style>
         /* CSS Styles */
         * {
@@ -17,8 +17,21 @@
             font-family: 'Arial', sans-serif;
             line-height: 1.6;
             color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* p5.js canvas background */
+        #p5-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            width: 100vw;
+            height: 100vh;
         }
 
         .container {
@@ -28,13 +41,14 @@
         }
 
         header {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             padding: 2rem;
             margin-bottom: 2rem;
             text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         h1 {
@@ -50,11 +64,14 @@
         }
 
         .content {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             padding: 2rem;
             margin-bottom: 2rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: white;
         }
 
         .btn {
@@ -82,8 +99,9 @@
         }
 
         .feature-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             padding: 1.5rem;
             text-align: center;
@@ -106,7 +124,7 @@
         .counter {
             font-size: 2rem;
             font-weight: bold;
-            color: #667eea;
+            color: #ffffff;
             margin: 1rem 0;
         }
 
@@ -114,8 +132,9 @@
             margin-top: 1rem;
             padding: 1rem;
             border-radius: 10px;
-            background: #e8f5e8;
+            background: rgba(72, 187, 120, 0.8);
             border: 1px solid #4caf50;
+            color: white;
             display: none;
         }
 
@@ -137,6 +156,7 @@
     </style>
 </head>
 <body>
+    <div id="p5-canvas"></div>
     <div class="container">
         <header>
             <h1>Welcome to My Website</h1>
@@ -176,7 +196,119 @@
     </div>
 
     <script>
-        // JavaScript Functions
+        // Your Aquatic Scene Background
+        let particles = [];
+        let circles = [];
+        let lilyPads = [];
+        const num = 1000;
+        const circ = 100;
+        const lilyCount = 10;
+        const noiseScale = 0.01/2;
+
+        function setup() {
+            let canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('p5-canvas');
+            
+            for(let i = 0; i < num; i++) {
+                particles.push(createVector(random(width), random(height)));
+            }
+            
+            for(let c = 0; c < circ; c++) {
+                circles.push({
+                    x: random(width),
+                    y: random(height),
+                    radius: random(300)
+                });
+            }
+            
+            for(let l = 0; l < lilyCount; l++) {
+                lilyPads.push({
+                    x: random(width),
+                    y: random(height),
+                    radius: random(20, 60),
+                    rotation: random(TWO_PI), 
+                    speed: random(0.2, 0.4),
+                    direction: random(TWO_PI),
+                    noiseOffset: random(1000) 
+                });
+            }
+            
+            clear();
+        }
+
+        function draw() {
+            background(5, 34, 52, 10); // dark mode
+            
+            // circles (water effects)
+            for(let c = 0; c < circ; c++) {
+                let col = color(random(55, 65), random(200, 250), random(170, 210)); // dark mode
+                col.setAlpha(2);
+                fill(col);
+                noStroke();
+                circle(circles[c].x, circles[c].y, circles[c].radius);
+            }
+            
+            // fish particles
+            for(let i = 0; i < num; i++) {
+                let r = random(0, 3);
+                r = ceil(r);
+                if (r == 1) {
+                    stroke("#ffd67b"); // dark mode
+                }
+                else if(r == 2) {
+                    stroke("#f9d748");
+                }
+                else if(r == 3) {
+                    stroke("#FF5F1F"); // dark mode
+                }
+                strokeWeight(3);
+                let p = particles[i];
+                
+                point(p.x, p.y);
+                let n = noise(p.x * noiseScale, p.y * noiseScale, frameCount * noiseScale * noiseScale);
+                let a = TAU * n;
+                p.x += cos(a);
+                p.y += sin(a);
+                if(!onScreen(p)) {
+                    p.x = random(width);
+                    p.y = random(height);
+                }
+            }
+            
+            // lily pads
+            for(let l = 0; l < lilyCount; l++) {
+                let lily = lilyPads[l];
+                let noiseVal = noise(lily.noiseOffset + frameCount * 0.01);
+                lily.direction += map(noiseVal, 0, 1, -0.05, 0.05);
+                lily.x += cos(lily.direction) * lily.speed;
+                lily.y += sin(lily.direction) * lily.speed;
+                
+                lily.rotation += 0.002;
+                
+                if (lily.x < -lily.radius) lily.x = width + lily.radius;
+                if (lily.x > width + lily.radius) lily.x = -lily.radius;
+                if (lily.y < -lily.radius) lily.y = height + lily.radius;
+                if (lily.y > height + lily.radius) lily.y = -lily.radius;
+                
+                push();
+                translate(lily.x, lily.y);
+                rotate(lily.rotation); 
+                fill(25, 185, 132, 128); // dark mode
+                noStroke();
+                arc(0, 0, lily.radius * 2, lily.radius * 2, 0, PI + HALF_PI*3/2);
+                pop();
+            }
+        }
+
+        function onScreen(v) {
+            return v.x >= 0 && v.x <= width && v.y >= 0 && v.y <= height;
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
+        // Your original website JavaScript functions
         function showMessage() {
             const messageDiv = document.getElementById('message');
             messageDiv.innerHTML = '🎉 Hello! This message was created with JavaScript!';
@@ -189,9 +321,38 @@
         }
 
         function changeColor() {
-            const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
-            const randomColor = colors[Math.floor(Math.random() * colors.length)];
-            document.body.style.background = `linear-gradient(135deg, ${randomColor} 0%, #764ba2 100%)`;
+            // Regenerate the aquatic scene with new random positions
+            particles = [];
+            circles = [];
+            lilyPads = [];
+            
+            // Reinitialize with new positions
+            for(let i = 0; i < num; i++) {
+                particles.push(createVector(random(width), random(height)));
+            }
+            
+            for(let c = 0; c < circ; c++) {
+                circles.push({
+                    x: random(width),
+                    y: random(height),
+                    radius: random(300)
+                });
+            }
+            
+            for(let l = 0; l < lilyCount; l++) {
+                lilyPads.push({
+                    x: random(width),
+                    y: random(height),
+                    radius: random(20, 60),
+                    rotation: random(TWO_PI), 
+                    speed: random(0.2, 0.4),
+                    direction: random(TWO_PI),
+                    noiseOffset: random(1000) 
+                });
+            }
+            
+            // Change noise seed like your original mouseReleased function
+            noiseSeed(millis());
         }
 
         let counterInterval;
@@ -228,7 +389,7 @@
                 });
                 
                 card.addEventListener('mouseleave', function() {
-                    this.style.background = 'rgba(255, 255, 255, 0.1)';
+                    this.style.background = 'rgba(0, 0, 0, 0.3)';
                 });
             });
         });
